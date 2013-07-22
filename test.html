@@ -1,0 +1,67 @@
+<html>
+<head>
+<title>QR</title>
+<style>
+.line {
+}
+.cell {
+	display: inline-block;
+	width: 5px;
+	height: 5px;
+	-webkit-transition: background-color 2s;
+	-moz-transition: background-color 2s;
+	-ms-transition: background-color 2s;
+	transition: background-color 2s;
+}
+.dark {
+	background-color: black;
+}
+</style>
+</head>
+<body>
+<script>
+var data = 'DATA';
+
+var qr = [], cells = [];
+data.replace(/.{2}/g, function(hex) {
+	qr.push(parseInt(hex, 16));
+});
+
+var w = Math.sqrt(qr.length);
+
+var box = document.body.appendChild(document.createElement('div'));
+box.className = 'qr';
+var line = document.createElement('div');
+line.className = 'line';
+var cell = document.createElement('div');
+cell.className = 'cell';
+
+for (var i = 0, idx = 0; i < w; i++) {
+	var nline = box.appendChild(line.cloneNode(true));
+	for (var j = 0; j < w; j++, idx++) {
+		var ncell = nline.appendChild(cell.cloneNode(true));
+		if (qr[idx] & 1)
+			ncell.classList.add('dark');
+		if (qr[idx] & (3 << 5))
+			ncell.classList.add('align');
+		cells.push(ncell);
+	}
+}
+
+var maxChanged = parseInt(w * w * .03);
+var changed = [];
+setInterval(function() {
+	for (var i = 0; i < 5; i++) {
+		var randomCell = cells[parseInt(cells.length * Math.random())];
+		if (randomCell.classList.contains('align') || changed.indexOf(randomCell) > -1) {
+			continue;
+		}
+		if (changed.length == maxChanged)
+			changed.shift().classList.toggle('dark');
+		randomCell.classList.toggle('dark');
+		changed.push(randomCell);
+	}
+}, 120);
+
+</script>
+</body>

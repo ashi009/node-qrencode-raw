@@ -1,9 +1,9 @@
 {
   "targets": [
     {
-      "target_name": "hello",
+      "target_name": "qrencode",
       "sources": [
-        "hello.cc"
+        "src/qrencode.cc"
       ],
       "libraries": [
         "-lqrencode"

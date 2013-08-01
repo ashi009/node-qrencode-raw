@@ -1,8 +1,13 @@
 {
-  "name": "hello_world",
-  "version": "0.0.0",
-  "description": "Node.js Addons Example #1",
-  "main": "hello.js",
+  "name": "qrencode",
+  "version": "0.1.0",
+  "author": "Xiaoyi Shi <ashi009@gmail.com>",
+  "description": "libqrencode Node.js wrapper",
+  "main": "index.js",
   "private": true,
+  "scripts": {
+    "test": "mocha",
+    "start": "node demo"
+  },
   "gypfile": true
 }

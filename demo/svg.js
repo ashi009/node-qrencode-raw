@@ -1,7 +1,11 @@
 var qrencode = require('../');
 var util = require('util');
 
-var buf = new Buffer(process.argv[2]);
+var message = process.argv[2];
+var scale = parseInt(process.argv[3]) || 1;
+var color = process.argv[4] || '#000';
+
+var buf = new Buffer(message);
 var res = qrencode.encodeBuffer(buf, 0, qrencode.ECLEVEL_L);
 var width = res.width;
 var data = res.data;
@@ -27,9 +31,19 @@ var d = [];
 for (var i = 0; i < lines.length; i++) {
   var line = lines[i];
   for (var j = 0; j < line.length; j++) {
-    d.push(util.format('M %d %d h %d', line[j][0], i + .5, line[j][1] - line[j][0]));
+    d.push(util.format('M %d %d h %d',
+      (1 + line[j][0]) * scale,
+      (1 + i + 0.5) * scale,
+      (line[j][1] - line[j][0]) * scale
+    ));
   }
 }
 
-console.log('<svg xmlns="http://www.w3.org/2000/svg" width="'+ width +'" height="'+ width +'" stroke="#000" fill="none"><path d="' + d.join(' ') + '"/></svg>');
-
+console.log('<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" ' +
+    'stroke="%s" stroke-width="%d" fill="none"><path d="%s"/></svg>',
+    (width + 2) * scale,
+    (width + 2) * scale,
+    color,
+    scale,
+    d.join(' ')
+);

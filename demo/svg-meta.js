@@ -1,4 +1,4 @@
-var qrencode = require('../');
+var QR = require('../');
 var util = require('util');
 var Color = require('color');
 
@@ -9,7 +9,7 @@ var color = Color(process.argv[4] || '#000');
 console.error(color);
 
 var buf = new Buffer(message);
-var res = qrencode.encodeBuffer(buf, 0, qrencode.ECLEVEL_L);
+var res = QR.encode(buf, QR.ECLEVEL_L);
 var width = res.width;
 var data = res.data;
 
@@ -24,31 +24,31 @@ for (var i = 0, idx = 0; i < width; i++) {
     var px = data.readUInt8(idx);
     var fill = Color('#fff');
     var type = [];
-    if (px & 1) {
+    if (px & QR.DOT_BLACK) {
       fill = fill.mix(color);
       type.push('black');
     }
-    if (px & 2) {
+    if (px & QR.DOT_DATA_ECC) {
       fill = fill.mix(Color('red'));
       type.push('data/ecc');
     }
-    if (px & 4) {
+    if (px & QR.DOT_FORMAT) {
       fill = fill.mix(Color('yellow'));
       type.push('format');
     }
-    if (px & 8) {
+    if (px & QR.DOT_VERSION) {
       fill = fill.mix(Color('green'));
       type.push('ver');
     }
-    if (px & 16) {
+    if (px & QR.DOT_TIMING) {
       fill = fill.mix(Color('blue'));
       type.push('timing');
     }
-    if (px & 32) {
+    if (px & QR.DOT_ALIGH) {
       fill = fill.mix(Color('purple'));
       type.push('alignment');
     }
-    if (px & 64) {
+    if (px & QR.DOT_FINDER) {
       fill = fill.mix(Color('pink'));
       type.push('finder');
     }

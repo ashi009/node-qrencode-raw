@@ -1,163 +1,126 @@
 #include <errno.h>
-
-#include <v8.h>
-#include <node.h>
-#include <node_buffer.h>
 #include <qrencode.h>
+#include <node.h>
+#include <nan.h>
 
-#include <iostream>
+using v8::Integer;
+using v8::String;
+using v8::Object;
+using v8::Handle;
+using v8::FunctionTemplate;
+using v8::PropertyAttribute;
+using v8::ReadOnly;
+using v8::DontDelete;
 
-using namespace v8;
-using namespace node;
+NAN_METHOD(Encode) {
 
-Handle<Value> HandleQRResult(QRcode *code, HandleScope &scope) {
+  NanScope();
 
-  if (!code) {
-    char const *message;
-    switch (errno) {
-      case EINVAL:
-        message = "invalid input Object";
-      break;
-      case ENOMEM:
-        message = "unable to allocate memory for input";
-      break;
-      case ERANGE:
-        message = "input data is too large";
-      break;
-    }
-    ThrowException(Exception::Error(String::New(message)));
-    return scope.Close(Undefined());
+  if (args.Length() == 0) {
+    NanThrowTypeError("Data is required");
+    NanReturnUndefined();
   }
 
-  Handle<Object> result = Object::New();
+  int version = 0;
+  QRcode *code = NULL;
+  QRecLevel level = QR_ECLEVEL_M;
 
-  result->Set(String::New("version"), Integer::New(code->version));
-  result->Set(String::New("width"), Integer::New(code->width));
-  result->Set(String::New("data"), Buffer::New(
-      const_cast<const char *>(reinterpret_cast<char *>(code->data)),
-      code->width * code->width)->handle_);
+  if (args.Length() >= 2) {
+    if (!args[1]->IsInt32()) {
+      NanThrowTypeError("Level must be ECLEVEL_L, ECLEVEL_M, ECLEVEL_Q or ECLEVEL_H");
+      NanReturnUndefined();
+    }
+    level = static_cast<QRecLevel>(args[1]->Int32Value());
+  }
+
+  if (args.Length() >= 3) {
+    if (!args[2]->IsInt32()) {
+      NanThrowTypeError("Version must be int");
+      NanReturnUndefined();
+    }
+    version = args[2]->Int32Value();
+  }
+
+  char *buf = NULL;
+  size_t buf_length = 0;
+
+  if (node::Buffer::HasInstance(args[0])) {
+    buf_length = node::Buffer::Length(args[0]);
+    buf = node::Buffer::Data(args[0]);
+  } else if (args[0]->IsString()) {
+    String::Utf8Value str(args[0]);
+    buf_length = str.length();
+    buf = *str;
+  } else if (args[0]->IsObject()) {
+    NanThrowTypeError("Data must be buffer or string");
+    NanReturnUndefined();
+  }
+
+  if (buf_length < 1) {
+    NanThrowTypeError("Data must not be empty.");
+    NanReturnUndefined();
+  }
+
+  code = QRcode_encodeData(buf_length, (unsigned char*)buf, version, level);
+
+  if (!code) {
+    char const *message = "Uknown Error";
+    switch (errno) {
+      case EINVAL:
+        message = "Invalid input Object";
+      break;
+      case ENOMEM:
+        message = "Unable to allocate memory for input";
+      break;
+      case ERANGE:
+        message = "Input data is too large";
+      break;
+    }
+    NanThrowError(message);
+    NanReturnUndefined();
+  }
+
+  Handle<Object> result = NanNew<Object>();
+
+  result->Set(NanNew<String>("version"), NanNew<Integer>(code->version));
+  result->Set(NanNew<String>("width"), NanNew<Integer>(code->width));
+  result->Set(NanNew<String>("data"), NanNewBufferHandle(
+      (char *)code->data, code->width * code->width));
 
   QRcode_free(code);
 
-  return scope.Close(result);
+  NanReturnValue(result);
 
 }
 
-Handle<Value> EncodeBuffer(const Arguments& args) {
+void InitAll(Handle<Object> exports) {
 
-  HandleScope scope;
+  exports->Set(NanNew<String>("encode"),
+      NanNew<FunctionTemplate>(Encode)->GetFunction());
 
-  if (args.Length() < 1) {
-    ThrowException(Exception::TypeError(String::New("data is required")));
-    return scope.Close(Undefined());
-  }
+  PropertyAttribute enumFieldAttr =
+      static_cast<PropertyAttribute>(ReadOnly | DontDelete);
 
-  if (!Buffer::HasInstance(args[0])) {
-    ThrowException(Exception::TypeError(String::New("data should be Buffer")));
-    return scope.Close(Undefined());
-  }
+#define DEFINE_ENUM(name, value) \
+  exports->Set(NanNew<String>(name), \
+      NanNew<Integer>(value), enumFieldAttr)
 
-  int version = 0;
-  QRecLevel level = QR_ECLEVEL_M;
+  DEFINE_ENUM("ECLEVEL_L", QR_ECLEVEL_L);
+  DEFINE_ENUM("ECLEVEL_M", QR_ECLEVEL_L);
+  DEFINE_ENUM("ECLEVEL_Q", QR_ECLEVEL_L);
+  DEFINE_ENUM("ECLEVEL_H", QR_ECLEVEL_L);
 
-  if (args.Length() == 2) {
-    if (!args[1]->IsInt32()) {
-      ThrowException(Exception::TypeError(String::New("version must be int")));
-      return scope.Close(Undefined());
-    }
-    version = args[1]->Int32Value();
-  }
+  DEFINE_ENUM("DOT_BLACK",    1 << 0);
+  DEFINE_ENUM("DOT_DATA_ECC", 1 << 1);
+  DEFINE_ENUM("DOT_FORMAT",   1 << 2);
+  DEFINE_ENUM("DOT_VERSION",  1 << 3);
+  DEFINE_ENUM("DOT_TIMING",   1 << 4);
+  DEFINE_ENUM("DOT_ALIGN",    1 << 5);
+  DEFINE_ENUM("DOT_FINDER",   1 << 6);
+  DEFINE_ENUM("DOT_NON_DATA", 1 << 7);
 
-  if (args.Length() == 3) {
-    if (!args[2]->IsInt32()) {
-      ThrowException(Exception::TypeError(String::New("level must be QRecLevel")));
-      return scope.Close(Undefined());
-    }
-    level = static_cast<QRecLevel>(args[2]->Int32Value());
-  }
-
-  return HandleQRResult(QRcode_encodeData(
-      Buffer::Length(args[0]),
-      const_cast<const unsigned char *>(
-          reinterpret_cast<unsigned char *>(Buffer::Data(args[0]))),
-      version, level), scope);
+#undef DEFINE_ENUM
 
 }
 
-Handle<Value> EncodeString(const Arguments& args) {
-
-  HandleScope scope;
-
-  if (args.Length() < 1) {
-    ThrowException(Exception::TypeError(String::New("str is required")));
-    return scope.Close(Undefined());
-  }
-
-  if (!args[0]->IsString()) {
-    ThrowException(Exception::TypeError(String::New("str should be string")));
-    return scope.Close(Undefined());
-  }
-
-  String::Utf8Value utf8_str(args[0]);
-
-  char *str = new char[utf8_str.length() + 1];
-  memcpy(str, *utf8_str, utf8_str.length());
-  str[utf8_str.length()] = '\0';
-
-  int version = 0;
-  QRecLevel level = QR_ECLEVEL_M;
-  int case_sensitive = 0;
-
-  if (args.Length() == 2) {
-    if (!args[1]->IsInt32()) {
-      ThrowException(Exception::TypeError(String::New("version must be int")));
-      return scope.Close(Undefined());
-    }
-    version = args[1]->Int32Value();
-  }
-
-  if (args.Length() == 3) {
-    if (!args[2]->IsInt32()) {
-      ThrowException(Exception::TypeError(String::New("level must be QRecLevel")));
-      return scope.Close(Undefined());
-    }
-    level = static_cast<QRecLevel>(args[2]->Int32Value());
-  }
-
-  if (args.Length() == 4) {
-    if (!args[3]->IsBoolean()) {
-      ThrowException(Exception::TypeError(String::New("case_sensitive must be bool")));
-      return scope.Close(Undefined());
-    }
-    case_sensitive = args[3]->BooleanValue() ? 1 : 0;
-  }
-
-  std::cout << str << " " << version << " " << level << " " << case_sensitive << std::endl;
-
-  return HandleQRResult(
-      QRcode_encodeString(str, version, level, QR_MODE_8, case_sensitive),
-      scope);
-
-}
-
-void init(Handle<Object> exports) {
-
-  exports->Set(String::NewSymbol("encodeBuffer"),
-      FunctionTemplate::New(EncodeBuffer)->GetFunction());
-  exports->Set(String::NewSymbol("encodeString"),
-      FunctionTemplate::New(EncodeString)->GetFunction());
-
-  PropertyAttribute enumFieldAttr = static_cast<PropertyAttribute>(ReadOnly | DontDelete);
-
-  exports->Set(String::NewSymbol("ECLEVEL_L"),
-      Integer::New(QR_ECLEVEL_L), enumFieldAttr);
-  exports->Set(String::NewSymbol("ECLEVEL_M"),
-      Integer::New(QR_ECLEVEL_M), enumFieldAttr);
-  exports->Set(String::NewSymbol("ECLEVEL_Q"),
-      Integer::New(QR_ECLEVEL_Q), enumFieldAttr);
-  exports->Set(String::NewSymbol("ECLEVEL_H"),
-      Integer::New(QR_ECLEVEL_H), enumFieldAttr);
-
-}
-
-NODE_MODULE(qrencode, init)
+NODE_MODULE(qrencode, InitAll)

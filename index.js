@@ -1,1 +1,1 @@
-module.exports = require('./build/Release/qrencode');
+module.exports = require('bindings')('qrencode.node');

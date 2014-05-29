@@ -1,13 +1,24 @@
 {
-  "name": "qrencode",
-  "version": "0.1.0",
+  "name": "qrencode-raw",
+  "version": "0.1.1",
   "author": "Xiaoyi Shi <ashi009@gmail.com>",
-  "description": "libqrencode Node.js wrapper",
-  "main": "index.js",
-  "private": true,
-  "scripts": {
-    "test": "mocha",
-    "start": "node demo"
+  "description": "A node.js wrapper for libqrencode, but instead of encoding data to image, it returns raw QR data in buffer, which allows you to do amazing things.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ashi009/node-qrencode-raw.git"
   },
-  "gypfile": true
+  "scripts": {
+    "test": "mocha"
+  },
+  "engines": {
+    "node": ">=0.8"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "should": "*"
+  },
+  "dependencies": {
+    "bindings": "*",
+    "nan": "*"
+  }
 }

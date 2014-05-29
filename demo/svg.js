@@ -1,4 +1,4 @@
-var qrencode = require('../');
+var QR = require('../');
 var util = require('util');
 
 var message = process.argv[2];
@@ -6,7 +6,7 @@ var scale = parseInt(process.argv[3]) || 1;
 var color = process.argv[4] || '#000';
 
 var buf = new Buffer(message);
-var res = qrencode.encodeBuffer(buf, 0, qrencode.ECLEVEL_L);
+var res = QR.encode(buf, QR.ECLEVEL_L);
 var width = res.width;
 var data = res.data;
 
@@ -15,7 +15,7 @@ for (var i = 0, offset = 0; i < width; i++) {
   var line = lines[i] = [];
   for (var j = 0; j < width; j++, offset++) {
     var px = data.readUInt8(offset);
-    if (px & 1) {
+    if (px & QR.DOT_BLACK) {
       var last = line[line.length - 1];
       if (last && last[1] == j) {
         last[1]++;

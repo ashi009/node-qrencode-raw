@@ -1,6 +1,6 @@
 {
   "name": "qrencode-raw",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "Xiaoyi Shi <ashi009@gmail.com>",
   "description": "A node.js wrapper for libqrencode, but instead of encoding data to image, it returns raw QR data in buffer, which allows you to do amazing things.",
   "repository": {

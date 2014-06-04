@@ -41,27 +41,17 @@ NAN_METHOD(Encode) {
     version = args[2]->Int32Value();
   }
 
-  char *buf = NULL;
-  size_t buf_length = 0;
-
   if (node::Buffer::HasInstance(args[0])) {
-    buf_length = node::Buffer::Length(args[0]);
-    buf = node::Buffer::Data(args[0]);
+    code = QRcode_encodeData(node::Buffer::Length(args[0]),
+        (unsigned char*)node::Buffer::Data(args[0]), version, level);
   } else if (args[0]->IsString()) {
     String::Utf8Value str(args[0]);
-    buf_length = str.length();
-    buf = *str;
+    code = QRcode_encodeData(str.length(),
+        (unsigned char*)*str, version, level);
   } else if (args[0]->IsObject()) {
     NanThrowTypeError("Data must be buffer or string");
     NanReturnUndefined();
   }
-
-  if (buf_length < 1) {
-    NanThrowTypeError("Data must not be empty.");
-    NanReturnUndefined();
-  }
-
-  code = QRcode_encodeData(buf_length, (unsigned char*)buf, version, level);
 
   if (!code) {
     char const *message = "Uknown Error";

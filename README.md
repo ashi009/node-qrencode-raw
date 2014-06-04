@@ -17,15 +17,15 @@ You may need to install libqrencode-dev (>= 3.2) before install this package.
 
 ## Usage
 
-    var QR = require('qrencode-raw');
-    var res = QR.encode(data, level, version);
+    var qr = require('qrencode-raw');
+    var res = qr.encode(data, level, version);
 
 - **data** _string_ | _Buffer_ data to encode, cannot be empty
 - **level** _QRecLevel_ error correction level:
-  - `QR.ECLEVEL_L` Lowest
-  - `QR.ECLEVEL_M`
-  - `QR.ECLEVEL_Q`
-  - `QR.ECLEVEL_H` Highest
+  - `qr.ECLEVEL_L` Lowest
+  - `qr.ECLEVEL_M`
+  - `qr.ECLEVEL_Q`
+  - `qr.ECLEVEL_H` Highest
 - **version** _int_ QR code version
   - `0` auto
   - `1` ~ `40` manually set
@@ -43,11 +43,11 @@ You may need to install libqrencode-dev (>= 3.2) before install this package.
 - **data** _Buffer_ qr code actual data, each byte represent a dot,
   width * height bytes in total.<br>
   You can use bitwise AND with flags on each byte to extract info for that dot:
-  - `QR.DOT_BLACK` dot is black.
-  - `QR.DOT_DATA_ECC` dot is part of data or ecc code
-  - `QR.DOT_FORMAT` dot is format info
-  - `QR.DOT_VERSION` dot is version info
-  - `QR.DOT_TIMING` dot is part of timing pattern
-  - `QR.DOT_ALIGN` dot is part of alignment pattern
-  - `QR.DOT_FINDER` dot is part of finder pattern
-  - `QR.DOT_NON_DATA` dot is non-data
+  - `qr.DOT_BLACK` dot is black.
+  - `qr.DOT_DATA_ECC` dot is part of data or ecc code
+  - `qr.DOT_FORMAT` dot is format info
+  - `qr.DOT_VERSION` dot is version info
+  - `qr.DOT_TIMING` dot is part of timing pattern
+  - `qr.DOT_ALIGN` dot is part of alignment pattern
+  - `qr.DOT_FINDER` dot is part of finder pattern
+  - `qr.DOT_NON_DATA` dot is non-data

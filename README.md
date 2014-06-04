@@ -1,4 +1,4 @@
-# qrencode-raw [![NPM version](https://badge.fury.io/js/qrencode-raw.png)](http://badge.fury.io/js/qrencode-raw) [![Dependencies](https://david-dm.org/ashi009/qrencode-raw.png)](https://david-dm.org/ashi009/qrencode-raw)
+# qrencode-raw [![NPM version](https://badge.fury.io/js/qrencode-raw.png)](http://badge.fury.io/js/qrencode-raw) [![Dependencies](https://david-dm.org/ashi009/node-qrencode-raw.png)](https://david-dm.org/ashi009/node-qrencode-raw)
 
 A node.js wrapper for libqrencode, but instead of encoding data to image, it
 returns raw QR data in buffer, which allows you to do amazing things.

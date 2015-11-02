@@ -77,9 +77,9 @@ void Encode(const Nan::FunctionCallbackInfo<Value>& info) {
 
   Local<Object> result = Nan::New<Object>();
 
-  Nan::Set(result,Nan::New("version").ToLocalChecked(), Nan::New(code->version));
-  Nan::Set(result,Nan::New("width").ToLocalChecked(), Nan::New(code->width));
-  Nan::Set(result,Nan::New("data").ToLocalChecked(), Nan::CopyBuffer(
+  Nan::Set(result, Nan::New("version").ToLocalChecked(), Nan::New(code->version));
+  Nan::Set(result, Nan::New("width").ToLocalChecked(), Nan::New(code->width));
+  Nan::Set(result, Nan::New("data").ToLocalChecked(), Nan::CopyBuffer(
       (char *)code->data, code->width * code->width).ToLocalChecked());
 
   QRcode_free(code);
@@ -90,7 +90,7 @@ void Encode(const Nan::FunctionCallbackInfo<Value>& info) {
 
 NAN_MODULE_INIT(InitAll) {
 
-  Nan::Set(target,Nan::New<String>("encode").ToLocalChecked(),
+  Nan::Set(target, Nan::New<String>("encode").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(Encode)).ToLocalChecked());
 
   PropertyAttribute enumFieldAttr =

@@ -6,51 +6,55 @@
 using v8::Integer;
 using v8::String;
 using v8::Object;
-using v8::Handle;
+using v8::Value;
+using v8::Local;
+using v8::Function;
 using v8::FunctionTemplate;
 using v8::PropertyAttribute;
 using v8::ReadOnly;
 using v8::DontDelete;
 
-NAN_METHOD(Encode) {
+void Encode(const Nan::FunctionCallbackInfo<Value>& info) {
 
-  NanScope();
-
-  if (args.Length() == 0) {
-    NanThrowTypeError("Data is required");
-    NanReturnUndefined();
+  if (info.Length() == 0) {
+    Nan::ThrowTypeError("Data is required");
+    info.GetReturnValue().SetUndefined();
+    return;
   }
 
   int version = 0;
   QRcode *code = NULL;
   QRecLevel level = QR_ECLEVEL_M;
 
-  if (args.Length() >= 2) {
-    if (!args[1]->IsInt32()) {
-      NanThrowTypeError("Level must be ECLEVEL_L, ECLEVEL_M, ECLEVEL_Q or ECLEVEL_H");
-      NanReturnUndefined();
+  if (info.Length() >= 2) {
+    if (!info[1]->IsInt32()) {
+      Nan::ThrowTypeError("Level must be ECLEVEL_L, ECLEVEL_M, ECLEVEL_Q or ECLEVEL_H");
+      info.GetReturnValue().SetUndefined();
+      return;
     }
-    level = static_cast<QRecLevel>(args[1]->Int32Value());
+    level = static_cast<QRecLevel>(info[1]->Int32Value());
   }
 
-  if (args.Length() >= 3) {
-    if (!args[2]->IsInt32()) {
-      NanThrowTypeError("Version must be int");
-      NanReturnUndefined();
+  if (info.Length() >= 3) {
+    if (!info[2]->IsInt32()) {
+      Nan::ThrowTypeError("Version must be int");
+      info.GetReturnValue().SetUndefined();
+      return;
     }
-    version = args[2]->Int32Value();
+    version = info[2]->Int32Value();
   }
 
-  if (node::Buffer::HasInstance(args[0])) {
-    code = QRcode_encodeData(node::Buffer::Length(args[0]),
-        (unsigned char*)node::Buffer::Data(args[0]), version, level);
-  } else if (args[0]->IsString()) {
-    String::Utf8Value str(args[0]);
+  if (node::Buffer::HasInstance(info[0])) {
+    code = QRcode_encodeData(node::Buffer::Length(info[0]),
+        (unsigned char*)node::Buffer::Data(info[0]), version, level);
+  } else if (info[0]->IsString()) {
+    String::Utf8Value str(info[0]);
     code = QRcode_encodeData(str.length(),
         (unsigned char*)*str, version, level);
-  } else if (args[0]->IsObject()) {
-    NanThrowTypeError("Data must be buffer or string");
-    NanReturnUndefined();
+  } else if (info[0]->IsObject()) {
+    Nan::ThrowTypeError("Data must be buffer or string");
+    info.GetReturnValue().SetUndefined();
+    return;
   }
 
   if (!code) {
@@ -66,34 +70,35 @@ NAN_METHOD(Encode) {
         message = "Input data is too large";
       break;
     }
-    NanThrowError(message);
-    NanReturnUndefined();
+    Nan::ThrowError(message);
+    info.GetReturnValue().SetUndefined();
+    return;
   }
 
-  Handle<Object> result = NanNew<Object>();
+  Local<Object> result = Nan::New<Object>();
 
-  result->Set(NanNew<String>("version"), NanNew<Integer>(code->version));
-  result->Set(NanNew<String>("width"), NanNew<Integer>(code->width));
-  result->Set(NanNew<String>("data"), NanNewBufferHandle(
-      (char *)code->data, code->width * code->width));
+  Nan::Set(result,Nan::New("version").ToLocalChecked(), Nan::New(code->version));
+  Nan::Set(result,Nan::New("width").ToLocalChecked(), Nan::New(code->width));
+  Nan::Set(result,Nan::New("data").ToLocalChecked(), Nan::CopyBuffer(
+      (char *)code->data, code->width * code->width).ToLocalChecked());
 
   QRcode_free(code);
 
-  NanReturnValue(result);
+  info.GetReturnValue().Set(result);
 
 }
 
-void InitAll(Handle<Object> exports) {
+NAN_MODULE_INIT(InitAll) {
 
-  exports->Set(NanNew<String>("encode"),
-      NanNew<FunctionTemplate>(Encode)->GetFunction());
+  Nan::Set(target,Nan::New<String>("encode").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<FunctionTemplate>(Encode)).ToLocalChecked());
 
   PropertyAttribute enumFieldAttr =
       static_cast<PropertyAttribute>(ReadOnly | DontDelete);
 
 #define DEFINE_ENUM(name, value) \
-  exports->Set(NanNew<String>(name), \
-      NanNew<Integer>(value), enumFieldAttr)
+  Nan::Set(target,Nan::New(name).ToLocalChecked(), \
+      Nan::New(value))
 
   DEFINE_ENUM("ECLEVEL_L", QR_ECLEVEL_L);
   DEFINE_ENUM("ECLEVEL_M", QR_ECLEVEL_M);

@@ -4,6 +4,7 @@
 #include <nan.h>
 
 using v8::Integer;
+using v8::Int32;
 using v8::String;
 using v8::Object;
 using v8::Value;
@@ -32,7 +33,7 @@ void Encode(const Nan::FunctionCallbackInfo<Value>& info) {
       info.GetReturnValue().SetUndefined();
       return;
     }
-    level = static_cast<QRecLevel>(info[1]->Int32Value());
+    level = static_cast<QRecLevel>(info[1].As<Int32>()->Value());
   }
 
   if (info.Length() >= 3) {
@@ -41,14 +42,14 @@ void Encode(const Nan::FunctionCallbackInfo<Value>& info) {
       info.GetReturnValue().SetUndefined();
       return;
     }
-    version = info[2]->Int32Value();
+    version = info[2].As<Int32>()->Value();
   }
 
   if (node::Buffer::HasInstance(info[0])) {
     code = QRcode_encodeData(node::Buffer::Length(info[0]),
         (unsigned char*)node::Buffer::Data(info[0]), version, level);
   } else if (info[0]->IsString()) {
-    String::Utf8Value str(info[0]);
+    Nan::Utf8String str(info[0]);
     code = QRcode_encodeData(str.length(),
         (unsigned char*)*str, version, level);
   } else if (info[0]->IsObject()) {
